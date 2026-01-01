@@ -39,3 +39,5 @@ jobs:
               tags: |
                 ${{ secrets.DOCKER_USERNAME }}/my-php-app:latest
                 ${{ secrets.DOCKER_USERNAME }}/my-php-app:${{ github.sha }}
+              cache-from: type=gha
+              cache-to: type=gha,mode=max

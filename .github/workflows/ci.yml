@@ -55,7 +55,7 @@ jobs:
                 docker pull ${{ secrets.DOCKER_USERNAME }}/my-php-app:latest
                 docker stop my-php-app || true
                 docker rm my-php-app || true
-                docker run -d --name my-php-app -p 8080:80 ${{ secrets.DOCKER_USERNAME }}/my-php=app:latest
+                docker run -d --name my-php-app -p 8080:80 ${{ secrets.DOCKER_USERNAME }}/my-php-app:latest
                 docker image prune -f
 
 

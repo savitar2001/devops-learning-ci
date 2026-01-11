@@ -1,14 +1,14 @@
 version: '3.8'
 
 services:
-  prometheus:
-    image: prom/prometheus
-    container_name: prometheus
-    volumes:
+  prometheus: #image名稱
+    image: prom/prometheus #去這裡抓iamge
+    container_name: prometheus #容器名稱
+    volumes: #將主機上的檔案映射到容器內部，規則是主機路徑:容器內路徑
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
-    ports:
+    ports: #將主機上的端口映射給容器的端口，規則是主機端口:容器端口
       - "9090:9090"
-    networks:
+    networks: #加入特定網路，預設情況下docker compose會為每一個服務建立獨立網路，這樣無法跟web container通訊
       - monitor-net
   
   grafana:
@@ -18,7 +18,17 @@ services:
       - "3000:3000"
     networks:
       - monitor-net
+  
+  node-exporter:
+      image: quay.io/prometheus/node-exporter:latest
+      container_name: node-exporter
+      command:
+        - '--path.rootfs=/host'
+      network_mode: host
+      pid: host
+      volumes:
+        - '/:/host:ro,rslave'
 
-networks:
-  monitor-net:
-    external: true
+networks: #定義專案使用的網路堆疊
+  monitor-net: #網路識別名稱
+    external: true #生命週期宣告，指定此網路為外部預建，compose不負責建立或銷毀

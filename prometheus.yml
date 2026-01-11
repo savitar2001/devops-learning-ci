@@ -1,0 +1,15 @@
+global: #宣告全域配置
+  scrape_interval: 15s #抓取指標 metrics 的預設頻率
+
+scrape_configs: #抓取任務配置，抓誰
+  - job_name: 'prometheus' #作為標籤，從這個任務中抓到的數據都會自動帶上任務名稱
+    static_configs: #靜態配置，代表目標IP/domain是手動寫死的
+      - targets: ['localhost:9090'] #可同時填入多個節點prometheus會平行抓取
+  
+  - job_name: 'php-app'
+    static_configs: 
+      - targets: ['my-php-app:80']
+
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']

@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   prometheus: #image名稱
-    image: prom/prometheus #去這裡抓iamge
+    image: prom/prometheus #去這裡抓image
     container_name: prometheus #容器名稱
     volumes: #將主機上的檔案映射到容器內部，規則是主機路徑:容器內路徑
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
@@ -18,17 +18,39 @@ services:
       - "3000:3000"
     networks:
       - monitor-net
+    depends_on:
+      - loki
   
   node-exporter:
       image: quay.io/prometheus/node-exporter:latest
       container_name: node-exporter
       command:
-        - '--path.rootfs=/host'
-      network_mode: host
-      pid: host
+        - '--path.rootfs=/host' #重新定向根目錄，讓程式讀取/host，而非容器內的/，以此收集到宿主機真實的數據
+      network_mode: host #使用宿主機網路堆疊，容器不創建虛擬網卡，直接使用EC2的eth0，這是監控Host網路流量唯一方式，但是導致此容器不在monitor-net中，無法用容器名稱訪問
+      pid: host #使用宿主機Process ID空間，監控宿主機所有執行緒
       volumes:
-        - '/:/host:ro,rslave'
+        - '/:/host:ro,rslave' #掛載宿主機根目錄，第三個參數用來定義行為限制跟mount propagation 使用read only mode，允許讀取硬體資訊
 
+  loki:
+    image: grafana/loki:2.9.0
+    container_name: loki
+    ports:
+      - "3100:3100"
+    command:
+      - config.file=/etc/loki/local-config.yaml #指定Loki內部的預設設定路徑檔
+    networks:
+      - monitor-net
+  
+  promtail:
+    image: grafana/promtail:2.9.0
+    container_name: promtail
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro # Docker存放所有容器log(Json/text)的真實路徑，讓Promtail能直接讀取硬碟上的Log檔案
+      - /var/run/docker.sock:/var/run/docker.sock # 掛載Docker守護進程的通訊插座，讓Promtail詢問docker哪些容器活著，他們的名字跟ID是什麼
+      - ./promtail-config.yml:/etc/promtail/config.yml # 將我們寫好的配置檔覆蓋進去，告訴Promtail去哪裡抓bug，以及送到哪裡
+    command: -config.file=/etc/promtail/config.yml
+    networks:
+      - monitor-net
 networks: #定義專案使用的網路堆疊
   monitor-net: #網路識別名稱
     external: true #生命週期宣告，指定此網路為外部預建，compose不負責建立或銷毀

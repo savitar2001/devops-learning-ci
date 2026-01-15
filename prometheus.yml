@@ -12,4 +12,4 @@ scrape_configs: #抓取任務配置，抓誰
 
   - job_name: 'node-exporter'
     static_configs:
-      - targets: ['172.31.3.20:9100']
+      - targets: ['172.31.3.20:9100'] #監控宿主機，透過TCP/IP直接連線，因為node exporter不在monitor-net內無法使用容器名稱解析
